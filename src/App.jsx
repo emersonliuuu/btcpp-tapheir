@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { generateKeyPair, createTaprootTrust, explainTaprootTrust } from './utils/bitcoin.js';
+import { createMockOracle, explainOracleRole } from './utils/oracle.js';
 import './App.css';
 
 function App() {
   const [trust, setTrust] = useState(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deathCertificate, setDeathCertificate] = useState(null);
+  const [oracleLoading, setOracleLoading] = useState(false);
 
   // Generate new trust with three key pairs and script tree
   const generateTrust = () => {
@@ -74,6 +77,34 @@ function App() {
   const truncateKey = (key) => {
     if (!key) return '';
     return `${key.substring(0, 16)}...${key.substring(key.length - 4)}`;
+  };
+
+  // Issue death certificate via Oracle (Demo)
+  const issueOracleCertificate = () => {
+    if (!trust) {
+      alert('請先生成信託！');
+      return;
+    }
+
+    try {
+      setOracleLoading(true);
+
+      // Create Oracle instance with the trust's oracle keys
+      const oracle = createMockOracle(trust.oracle);
+
+      // Issue death certificate for demo
+      const certificate = oracle.issueDeathCertificate(
+        trust.address,
+        'Demo User'  // In production, this would be verified real name
+      );
+
+      setDeathCertificate(certificate);
+      setOracleLoading(false);
+    } catch (error) {
+      console.error('Error issuing certificate:', error);
+      alert('簽發證明時發生錯誤：' + error.message);
+      setOracleLoading(false);
+    }
   };
 
   return (
@@ -304,22 +335,157 @@ function App() {
           </div>
         )}
 
-        {/* Instructions */}
-        {!trust && (
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <p className="text-gray-600 mb-4">
-              點擊上方按鈕開始創建您的比特幣遺產信託
-            </p>
-            <div className="text-left space-y-2 text-sm text-gray-500 max-w-2xl mx-auto">
-              <p>✨ <strong>功能說明：</strong></p>
-              <ul className="list-disc list-inside space-y-1 ml-4">
-                <li>自動生成持有者、繼承人和 Oracle 的密鑰對</li>
-                <li>創建 Taproot (P2TR) 地址於 Bitcoin Testnet</li>
-                <li>✅ 實現完整的 Taproot script tree</li>
-                <li>✅ 時間鎖花費路徑 (OP_CHECKLOCKTIMEVERIFY)</li>
-                <li>✅ Oracle + 繼承人雙簽名路徑</li>
-                <li>✅ 持有者直接花費路徑 (key path)</li>
-              </ul>
+        {/* Oracle Demo Section */}
+        {trust && (
+          <div className="bg-white rounded-xl shadow-2xl p-8 mt-6 space-y-6 animate-fadeIn">
+            <div className="border-b pb-4">
+              <h2 className="text-2xl font-bold text-purple-800 flex items-center">
+                <span className="text-3xl mr-3">🔮</span>
+                Oracle 演示功能
+              </h2>
+              <p className="text-gray-600 text-sm mt-2">
+                展示 Oracle 如何簽發死亡證明以授權早期繼承
+              </p>
+            </div>
+
+            {/* Oracle Demo Button */}
+            {!deathCertificate && (
+              <div className="text-center py-6">
+                <button
+                  onClick={issueOracleCertificate}
+                  disabled={oracleLoading}
+                  className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transform transition hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+                >
+                  {oracleLoading ? '簽發中...' : '🔮 模擬 Oracle 簽發死亡證明'}
+                </button>
+                <p className="text-gray-500 text-xs mt-3">
+                  💡 點擊按鈕模擬 Oracle 驗證並簽發證明
+                </p>
+              </div>
+            )}
+
+            {/* Death Certificate Display */}
+            {deathCertificate && (
+              <div className="space-y-4">
+                {/* Demo Notice */}
+                <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                  <p className="text-purple-900 font-semibold mb-1">
+                    📋 這是演示版本
+                  </p>
+                  <p className="text-purple-700 text-sm">
+                    生產環境需要：真實身份驗證、合法死亡證明驗證、多重授權流程、安全密鑰管理（HSM）
+                  </p>
+                </div>
+
+                {/* Certificate Information */}
+                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-lg border border-purple-200">
+                  <h3 className="font-bold text-purple-900 mb-4 text-lg">
+                    ✅ 數位死亡證明已簽發
+                  </h3>
+
+                  <div className="space-y-3 text-sm">
+                    {/* Certificate ID */}
+                    <div className="bg-white/70 p-3 rounded">
+                      <p className="text-gray-600 font-semibold mb-1">證明編號</p>
+                      <code className="text-purple-700 font-mono text-xs">
+                        {deathCertificate.certificateId}
+                      </code>
+                    </div>
+
+                    {/* Trust ID */}
+                    <div className="bg-white/70 p-3 rounded">
+                      <p className="text-gray-600 font-semibold mb-1">信託地址</p>
+                      <code className="text-purple-700 font-mono text-xs break-all">
+                        {deathCertificate.trustId}
+                      </code>
+                    </div>
+
+                    {/* Timestamp */}
+                    <div className="bg-white/70 p-3 rounded">
+                      <p className="text-gray-600 font-semibold mb-1">簽發時間</p>
+                      <p className="text-purple-700">{deathCertificate.issuedAt}</p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        Unix Timestamp: {deathCertificate.timestamp}
+                      </p>
+                    </div>
+
+                    {/* Signature */}
+                    <div className="bg-white/70 p-3 rounded">
+                      <p className="text-gray-600 font-semibold mb-1">Oracle 簽名</p>
+                      <code className="text-purple-700 font-mono text-xs break-all block">
+                        {truncateKey(deathCertificate.signature)}
+                      </code>
+                      <p className="text-gray-500 text-xs mt-2">
+                        完整簽名長度: {deathCertificate.signature.length} 字符
+                      </p>
+                    </div>
+
+                    {/* Oracle Public Key */}
+                    <div className="bg-white/70 p-3 rounded">
+                      <p className="text-gray-600 font-semibold mb-1">Oracle 公鑰</p>
+                      <code className="text-purple-700 font-mono text-xs break-all">
+                        {truncateKey(deathCertificate.oraclePublicKey)}
+                      </code>
+                    </div>
+
+                    {/* Message */}
+                    <div className="bg-white/70 p-3 rounded">
+                      <p className="text-gray-600 font-semibold mb-1">證明訊息</p>
+                      <code className="text-purple-700 font-mono text-xs break-all block">
+                        {deathCertificate.message}
+                      </code>
+                    </div>
+                  </div>
+                </div>
+
+                {/* How to Use */}
+                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500 p-4 rounded">
+                  <h4 className="font-bold text-indigo-900 mb-2">🔐 下一步：使用證明花費資金</h4>
+                  <div className="text-indigo-800 text-sm space-y-1">
+                    <p>1. 繼承人準備交易，使用「Oracle Path」花費腳本</p>
+                    <p>2. 附加 Oracle 簽名（來自此證明）</p>
+                    <p>3. 附加繼承人自己的簽名</p>
+                    <p>4. 廣播交易到 Bitcoin Testnet</p>
+                    <p className="text-indigo-600 mt-2">
+                      💡 此 Demo 展示了 Oracle 簽名的生成，實際花費需要構建完整的 PSBT 交易
+                    </p>
+                  </div>
+                </div>
+
+                {/* Reset Button */}
+                <div className="text-center">
+                  <button
+                    onClick={() => setDeathCertificate(null)}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition text-sm"
+                  >
+                    重新簽發證明
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Oracle Role Explanation */}
+            <div className="bg-gradient-to-r from-cyan-50 to-teal-50 border-l-4 border-cyan-500 p-4 rounded">
+              <h4 className="font-bold text-cyan-900 mb-2">📚 Oracle 在遺產信託中的角色</h4>
+              <div className="text-cyan-800 text-sm space-y-2">
+                <p><strong>目的：</strong>Oracle 作為可信第三方，驗證持有者死亡並授權繼承</p>
+                <div className="pl-4">
+                  <p className="font-semibold mt-2">工作流程：</p>
+                  <ol className="list-decimal list-inside space-y-1 text-xs">
+                    <li>繼承人提供死亡證明文件</li>
+                    <li>Oracle 驗證文件真實性</li>
+                    <li>Oracle 簽發數位死亡證明</li>
+                    <li>繼承人使用 Oracle 簽名 + 自己的簽名花費資金</li>
+                  </ol>
+                  <p className="font-semibold mt-2">優勢：</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>無需等待時間鎖到期</li>
+                    <li>提供法律證明和可追溯性</li>
+                    <li>防止早期盜用（需要 Oracle 授權）</li>
+                    <li>靈活的繼承時間點</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         )}
