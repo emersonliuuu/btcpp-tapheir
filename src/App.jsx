@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { generateKeyPair, createSimpleTaprootAddress } from './utils/bitcoin.js';
+import { generateKeyPair, createTaprootTrust, explainTaprootTrust } from './utils/bitcoin.js';
 import './App.css';
 
 function App() {
@@ -7,7 +7,7 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Generate new trust with three key pairs
+  // Generate new trust with three key pairs and script tree
   const generateTrust = () => {
     try {
       setLoading(true);
@@ -17,13 +17,24 @@ function App() {
       const heirKeys = generateKeyPair();
       const oracleKeys = generateKeyPair();
 
-      // Create Taproot address using owner's public key
-      const ownerPubKeyBuffer = Buffer.from(ownerKeys.publicKey, 'hex');
-      const taprootAddress = createSimpleTaprootAddress(ownerPubKeyBuffer);
+      // Create Taproot trust with script tree (1 hour timelock for demo)
+      const taprootTrust = createTaprootTrust(
+        ownerKeys.publicKey,
+        heirKeys.publicKey,
+        oracleKeys.publicKey,
+        1 // 1 hour timelock
+      );
 
-      // Create trust object
+      // Get human-readable explanation
+      const trustExplanation = explainTaprootTrust(taprootTrust);
+
+      // Create enhanced trust object with all information
       const newTrust = {
-        address: taprootAddress.address,
+        address: taprootTrust.address,
+        locktime: taprootTrust.locktime,
+        locktimeDate: taprootTrust.locktimeDate,
+        scripts: taprootTrust.scripts,
+        explanation: trustExplanation,
         owner: {
           publicKey: ownerKeys.publicKey,
           privateKey: ownerKeys.privateKey,
@@ -170,10 +181,51 @@ function App() {
               </div>
             </div>
 
+            {/* Script Tree Information */}
+            <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+              <h3 className="font-semibold text-indigo-800 mb-3">🌳 Taproot Script Tree</h3>
+              <div className="space-y-3 text-sm">
+                {/* Key Path */}
+                <div className="bg-white p-3 rounded">
+                  <p className="font-semibold text-gray-700 mb-1">🔑 Key Path (持有者直接花費)</p>
+                  <p className="text-gray-600 text-xs">
+                    {trust.explanation?.spendingPaths?.keyPath?.description}
+                  </p>
+                </div>
+
+                {/* Timelock Path */}
+                <div className="bg-white p-3 rounded">
+                  <p className="font-semibold text-gray-700 mb-1">⏰ Timelock Path (時間鎖路徑)</p>
+                  <p className="text-gray-600 text-xs mb-1">
+                    {trust.explanation?.spendingPaths?.timelockPath?.description}
+                  </p>
+                  <p className="text-indigo-600 text-xs font-mono">
+                    🔓 解鎖時間: {trust.locktimeDate}
+                  </p>
+                </div>
+
+                {/* Oracle Path */}
+                <div className="bg-white p-3 rounded">
+                  <p className="font-semibold text-gray-700 mb-1">🔮 Oracle Path (預言機路徑)</p>
+                  <p className="text-gray-600 text-xs">
+                    {trust.explanation?.spendingPaths?.oraclePath?.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Timestamp */}
             <div className="border-t pt-4">
               <p className="text-sm text-gray-500 text-center">
                 ⏰ 創建時間: {trust.createdAt}
+              </p>
+            </div>
+
+            {/* Enhanced Info Box */}
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+              <p className="text-blue-800 text-sm">
+                ℹ️ <strong>新功能：</strong>此信託已包含完整的 Taproot script tree，支持三種花費路徑：
+                持有者直接花費、1小時後繼承人花費、或 Oracle + 繼承人聯合花費。
               </p>
             </div>
 
@@ -197,8 +249,10 @@ function App() {
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>自動生成持有者、繼承人和 Oracle 的密鑰對</li>
                 <li>創建 Taproot (P2TR) 地址於 Bitcoin Testnet</li>
-                <li>安全的多簽名機制（未來階段實現）</li>
-                <li>時間鎖和條件解鎖（未來階段實現）</li>
+                <li>✅ 實現完整的 Taproot script tree</li>
+                <li>✅ 時間鎖花費路徑 (OP_CHECKLOCKTIMEVERIFY)</li>
+                <li>✅ Oracle + 繼承人雙簽名路徑</li>
+                <li>✅ 持有者直接花費路徑 (key path)</li>
               </ul>
             </div>
           </div>
