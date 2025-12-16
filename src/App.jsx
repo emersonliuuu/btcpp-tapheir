@@ -181,35 +181,109 @@ function App() {
               </div>
             </div>
 
-            {/* Script Tree Information */}
-            <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-              <h3 className="font-semibold text-indigo-800 mb-3">🌳 Taproot Script Tree</h3>
-              <div className="space-y-3 text-sm">
+            {/* Spending Paths Section */}
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">💰 花費路徑（Spending Paths）</h3>
+
+              <div className="space-y-4">
                 {/* Key Path */}
-                <div className="bg-white p-3 rounded">
-                  <p className="font-semibold text-gray-700 mb-1">🔑 Key Path (持有者直接花費)</p>
-                  <p className="text-gray-600 text-xs">
-                    {trust.explanation?.spendingPaths?.keyPath?.description}
-                  </p>
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-blue-500">
+                  <div className="flex items-start">
+                    <span className="text-2xl mr-3">🔑</span>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-blue-900 mb-2">Key Path - 持有者直接花費</h4>
+                      <p className="text-blue-800 text-sm mb-2">
+                        持有者可以隨時使用內部密鑰直接花費，無需揭露任何腳本。
+                      </p>
+                      <div className="bg-white/70 p-2 rounded text-xs space-y-1">
+                        <p className="text-blue-700">✓ <strong>隱私性最佳：</strong>看起來像普通交易</p>
+                        <p className="text-blue-700">✓ <strong>費用最低：</strong>不需要額外的腳本數據</p>
+                        <p className="text-blue-700">✓ <strong>立即可用：</strong>無需等待時間鎖</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Timelock Path */}
-                <div className="bg-white p-3 rounded">
-                  <p className="font-semibold text-gray-700 mb-1">⏰ Timelock Path (時間鎖路徑)</p>
-                  <p className="text-gray-600 text-xs mb-1">
-                    {trust.explanation?.spendingPaths?.timelockPath?.description}
-                  </p>
-                  <p className="text-indigo-600 text-xs font-mono">
-                    🔓 解鎖時間: {trust.locktimeDate}
-                  </p>
+                <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border-l-4 border-green-500">
+                  <div className="flex items-start">
+                    <span className="text-2xl mr-3">⏰</span>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-green-900 mb-2">Script Path 1 - 時間鎖路徑</h4>
+                      <p className="text-green-800 text-sm mb-2">
+                        時間鎖到期後，繼承人可以單獨使用自己的簽名花費。
+                      </p>
+                      <div className="bg-white/70 p-2 rounded text-xs space-y-1">
+                        <p className="text-green-700">🔓 <strong>解鎖時間：</strong>{trust.locktimeDate}</p>
+                        <p className="text-green-700">📜 <strong>使用腳本：</strong>OP_CHECKLOCKTIMEVERIFY</p>
+                        <p className="text-green-700">👨‍👩‍👧‍👦 <strong>需要簽名：</strong>繼承人單獨簽名</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Oracle Path */}
-                <div className="bg-white p-3 rounded">
-                  <p className="font-semibold text-gray-700 mb-1">🔮 Oracle Path (預言機路徑)</p>
-                  <p className="text-gray-600 text-xs">
-                    {trust.explanation?.spendingPaths?.oraclePath?.description}
+                <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg border-l-4 border-purple-500">
+                  <div className="flex items-start">
+                    <span className="text-2xl mr-3">🔮</span>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-purple-900 mb-2">Script Path 2 - Oracle 驗證路徑</h4>
+                      <p className="text-purple-800 text-sm mb-2">
+                        在時間鎖到期前，需要 Oracle 和繼承人共同簽名才能花費。
+                      </p>
+                      <div className="bg-white/70 p-2 rounded text-xs space-y-1">
+                        <p className="text-purple-700">🔐 <strong>雙重驗證：</strong>Oracle + 繼承人簽名</p>
+                        <p className="text-purple-700">📜 <strong>使用腳本：</strong>OP_CHECKSIGVERIFY + OP_CHECKSIG</p>
+                        <p className="text-purple-700">🚨 <strong>緊急使用：</strong>需經 Oracle 授權的早期繼承</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Privacy Advantage */}
+            <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border-l-4 border-cyan-500 p-4 rounded-lg">
+              <div className="flex items-start">
+                <span className="text-2xl mr-3">🛡️</span>
+                <div>
+                  <h4 className="font-bold text-cyan-900 mb-2">Taproot 隱私優勢</h4>
+                  <div className="text-cyan-800 text-sm space-y-1">
+                    <p>✓ <strong>鏈上看起來像普通地址：</strong>所有 Taproot 地址格式相同（tb1p...）</p>
+                    <p>✓ <strong>只在花費時暴露使用的路徑：</strong>未使用的腳本永遠不會公開</p>
+                    <p>✓ <strong>Key Path 最隱私：</strong>如果持有者直接花費，完全看不出有其他選項</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Testnet Faucet Info */}
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+              <div className="flex items-start">
+                <span className="text-2xl mr-3">💧</span>
+                <div className="flex-1">
+                  <h4 className="font-bold text-yellow-900 mb-2">獲取測試幣</h4>
+                  <p className="text-yellow-800 text-sm mb-3">
+                    這是 Bitcoin Testnet 地址，您可以從以下來源獲取免費測試幣：
                   </p>
+                  <div className="space-y-2">
+                    <a
+                      href="https://coinfaucet.eu/en/btc-testnet/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-white/70 p-2 rounded text-sm text-yellow-700 hover:bg-white transition"
+                    >
+                      🚰 <strong>Coinfaucet：</strong>https://coinfaucet.eu/en/btc-testnet/
+                    </a>
+                    <a
+                      href={`https://blockstream.info/testnet/address/${trust.address}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-white/70 p-2 rounded text-sm text-yellow-700 hover:bg-white transition"
+                    >
+                      🔍 <strong>查看此地址：</strong>Blockstream Testnet Explorer
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -221,18 +295,10 @@ function App() {
               </p>
             </div>
 
-            {/* Enhanced Info Box */}
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-              <p className="text-blue-800 text-sm">
-                ℹ️ <strong>新功能：</strong>此信託已包含完整的 Taproot script tree，支持三種花費路徑：
-                持有者直接花費、1小時後繼承人花費、或 Oracle + 繼承人聯合花費。
-              </p>
-            </div>
-
             {/* Warning Message */}
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-              <p className="text-yellow-800 text-sm">
-                ⚠️ <strong>注意：</strong>請妥善保存所有私鑰信息。這是測試網環境，僅供開發測試使用。
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+              <p className="text-red-800 text-sm">
+                ⚠️ <strong>安全提醒：</strong>請妥善保存所有私鑰（WIF 格式）。遺失私鑰將無法花費資金。這是測試網環境，僅供開發測試使用。
               </p>
             </div>
           </div>
