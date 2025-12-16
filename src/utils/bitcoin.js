@@ -3,9 +3,13 @@
  * Minimal viable implementation for Bitcoin Testnet operations
  */
 
+import { Buffer } from 'buffer';
 import * as bitcoin from 'bitcoinjs-lib';
 import * as ecc from 'tiny-secp256k1';
 import { ECPairFactory } from 'ecpair';
+
+// Make Buffer available globally for browser environment
+window.Buffer = Buffer;
 
 // Initialize bitcoinjs-lib with ECC library
 bitcoin.initEccLib(ecc);

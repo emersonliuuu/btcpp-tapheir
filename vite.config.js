@@ -12,5 +12,13 @@ export default defineConfig({
   ],
   optimizeDeps: {
     exclude: ['tiny-secp256k1']
+  },
+  define: {
+    'global': 'globalThis'
+  },
+  resolve: {
+    alias: {
+      buffer: 'buffer/'
+    }
   }
 })
